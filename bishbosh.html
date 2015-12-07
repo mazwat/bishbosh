@@ -62,7 +62,8 @@ img {
     var levelBars = [0,0,0,0,0,0,0,0];
     var score = 0;
     var count = 0;
-    var currentScore; 
+    var currentScore = 0; 
+    var timePenalty;
     // Set up a listener to listen for a key being pressed
     document.addEventListener("keydown", keyDownHandler, false);
     // set up a function called a 'handler' to handle what happens when a key is pressed. Find out which key is pressed. For example '39'is the keycode for the right cursor key.
@@ -77,6 +78,32 @@ img {
             width: ballRadius,
             strokeColor: "#00000",
             lineWidth: 10
+        }
+        function drawItem(type, xpos, ypos, fillColor, strokeColor, lineWidth, width, height, textContent, align, object) {
+            ctx.beginPath();
+            if (type === circle) {
+                ctx.arc(xpos, ypos, width, height, Math.PI * 2);
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.fill();
+                ctx.stroke();
+                ctx.closePath();
+            }
+            if (type === square) {
+                ctx.rect(xpos, ypos, width, height);
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.fill();
+                ctx.stroke();
+                ctx.closePath();
+            }
+            if (type === text) {
+                ctx.font='bolder 20px Arial';
+                ctx.fillStyle = fillColor;
+                ctx.fillText(textContent, xpos, ypos);
+                ctx.textAlign = align;
+
+            }            
         }
         // a function to player the ball on the screen
         function drawPlayer(player) {
@@ -143,14 +170,16 @@ img {
          function drawWin() {       
             setTimeout(resetWinGame, 1500);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            timePenalty = Math.round(count/3);
+            score = score-timePenalty;
             //clearInterval(timerTick);
             clearInterval(drawTick);
             console.log("win"); 
-            ctx.font='bolder 40px Arial';
+            ctx.font='bolder 25px Arial';
             ctx.fillStyle = "#0095DD    ";
             ctx.textAlign = "center";
             if (level < 10) {
-                ctx.fillText("COMPLETE", canvas.width / 2, (canvas.height / 2) + 10);
+                ctx.fillText("COMPLETE Time Penalty -"+timePenalty, canvas.width / 2, (canvas.height / 2) + 10);
             } else {
                 ctx.fillText("YOU WIN", canvas.width / 2, (canvas.height / 2) + 10);
 
@@ -164,7 +193,7 @@ img {
             tokenValue++;
             level++;
             levelBars[level-2] = 1;
-            score = Math.round(score-(count/3));
+            
             count = 0;
 
             // increase speed every level
@@ -232,7 +261,7 @@ img {
             ctx.font='bolder 20px Arial';
             ctx.fillStyle = "#0095DD    ";
             ctx.textAlign = "left";
-            ctx.fillText("SCORE: "+score+" TIMER: "+count+" CURRENT: "+currentScore, 20, 250);
+            ctx.fillText(/*"SCORE: "+*/score/*+"TIMER: "+count+"CURRENT: "+currentScore*/, 20, 250);
         }
         function timer() {
             count++
@@ -243,6 +272,7 @@ img {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawTrack();
             drawToken(randomPos);
+            //drawItem(type, xpos, ypos, fillColor, strokeColor, lineWidth, width, height, textContent, align, object); 
             drawPlayer(player);
             drawTokenText();
             drawProgress();
