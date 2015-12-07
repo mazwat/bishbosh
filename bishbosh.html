@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Bish Bosh</title>
+
+  <style type="text/css">
+   canvas {
+    background: #eee;
+    display: block; 
+    margin: 0 auto;
+}
+.console-line
+{
+    font-family: monospace; 
+    margin: 2px;
+}
+p {
+    font-family: "Courier New";
+    display: block; 
+    margin: 0 auto;
+    width:480px;
+    text-align: center;
+}
+img {
+   display: inline;  
+}
+  </style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  </head>
+  <body>
+  <canvas id="myCanvas" width="480" height="320"></canvas>
+    <p><br><STRONG>BISH BOSH</STRONG><br>
+    This is Bish <img src="bish.png"> who likes eating Bosh <img src="bosh.png">
+    <br>See how many Bosh you can eat. <br> The more Bosh Bish eats the faster it gets.
+    <br>Press SPACE BAR to eat!</p>
+    </body>
+    <script>
+     // Define the canvas element. Draw the 2D space
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var ballRadius = 20;
+    var x = 40;
+    var y = canvas.height/2;
+    var xspeed = 1;
+    var trackHeight = 60;
+    var trackWidth = 460;
+    var trackY = (canvas.height - trackHeight) / 2;
+    var trackX = 10;
+    var spacePressed = false;
+    var posRange;
+    var randomPos = 300;
+    // gap between player and token placement
+    var distThreshold = 50;
+    // direction: 'true' = moving right ---> and 'false' = moving left <----
+    var direction = true;
+    var anim = true;
+    var tokens = 3;
+    var tokenValue = 3;
+    var level = 1;
+    var levelBars = [0,0,0,0,0,0,0,0];
+    var score = 0;
+    var count = 0;
+    var currentScore; 
+    // Set up a listener to listen for a key being pressed
+    document.addEventListener("keydown", keyDownHandler, false);
+    // set up a function called a 'handler' to handle what happens when a key is pressed. Find out which key is pressed. For example '39'is the keycode for the right cursor key.
+    function keyDownHandler(e) {
+        if (e.keyCode == 32) {
+            spacePressed = true;
+        }
+        }
+        // player object used to change the colour and size of the player
+        var player = {
+            color: "rgba(0,0,0,0)",
+            width: ballRadius,
+            strokeColor: "#00000",
+            lineWidth: 10
+        }
+        // a function to player the ball on the screen
+        function drawPlayer(player) {
+            ctx.beginPath();
+            ctx.arc(x, y, player.width, 0, Math.PI * 2);
+            ctx.lineWidth = player.lineWidth;
+            ctx.strokeStyle = player.strokeColor;
+            ctx.fillStyle = player.color;
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+        }
+        function drawToken(xpos) {
+            ctx.beginPath();
+            ctx.arc(xpos, y, ballRadius / 2, 0, Math.PI * 2);
+            ctx.fillStyle = "#f00";
+            ctx.fill();
+            ctx.closePath();
+        }
+        // a function to draw the paddle on the screen
+        function drawTrack() {
+            ctx.beginPath();
+            ctx.rect(trackX, trackY, trackWidth, trackHeight);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+        function drawProgress() {
+            var progressX = 10;
+            var levels = levelBars;
+            for (i = 0; i < 8; i++) {          
+                ctx.beginPath();
+                ctx.rect(progressX, 192, 55, 5);
+                if (levelBars[i] === 0) {
+                    ctx.fillStyle = "#ccc";
+                } else {
+                    ctx.fillStyle = "#f00";
+                }
+                ctx.fill();
+                ctx.closePath();
+                progressX += 57.8;
+
+            }
+        }
+        // a function to draw the score text on the screen
+        function drawTokenText() {
+            ctx.font = "35px Helvetica";
+            ctx.font='bolder 40px Arial';
+            ctx.fillStyle = "#0095DD"; 
+            ctx.textAlign = "center";
+            ctx.fillText(tokens, randomPos, 130);
+        }
+        // a function to draw the Game over text on the screen
+        function drawEnd() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            clearInterval(drawTick);
+            ctx.font = "40px Arial";
+            ctx.font='bolder 50px Arial';
+            ctx.fillStyle = "#0095DD";
+            ctx.textAlign = "center";
+            ctx.fillText("GAME OVER", canvas.width / 2, (canvas.height / 2) + 10);
+            setTimeout(resetFailGame, 1000);    
+        }
+         function drawWin() {       
+            setTimeout(resetWinGame, 1500);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            //clearInterval(timerTick);
+            clearInterval(drawTick);
+            console.log("win"); 
+            ctx.font='bolder 40px Arial';
+            ctx.fillStyle = "#0095DD    ";
+            ctx.textAlign = "center";
+            if (level < 10) {
+                ctx.fillText("COMPLETE", canvas.width / 2, (canvas.height / 2) + 10);
+            } else {
+                ctx.fillText("YOU WIN", canvas.width / 2, (canvas.height / 2) + 10);
+
+            }
+        }
+        function resetWinGame() {
+            if (level === 10) {
+                document.location.reload();
+            }
+            console.log("reset");   
+            tokenValue++;
+            level++;
+            levelBars[level-2] = 1;
+            score = Math.round(score-(count/3));
+            count = 0;
+
+            // increase speed every level
+            if (xspeed > 0) {
+                xspeed+=.4;
+            } else {
+                xspeed-=.4;
+            }    
+            console.log("speed: "+xspeed);
+            tokens = tokenValue;
+            console.log("token value: "+tokenValue);
+            //document.location.reload();
+            drawTick = setInterval(draw, 10);
+            currentScore = score; 
+            //timeTick = setInterval(timer, 1000);
+                
+        }
+        function resetFailGame() {
+            console.log(tokens);
+            if (tokenValue <= 3) {
+                document.location.reload();
+                tokens = tokenValue;
+                console.log("level 1"+" tokenIncrease: "+tokenValue);
+                drawTick = setInterval(draw, 10);
+                console.log("level 1");
+            } else {            
+                tokens = tokenValue;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                console.log("level 2+"+" tokenIncrease: "+tokenValue);
+                drawTick = setInterval(draw, 10);
+                score = currentScore;
+            }           
+        }
+        function playerAnim() {
+            player.color = "rgba(255,0,0,1)";
+            player.width = 25;
+            player.strokeColor = "#f00";
+            setTimeout(changeColor, 100);
+
+            function changeColor() {
+                player.color = "rgba(0,0,0,0)";
+                player.width = ballRadius;
+                player.strokeColor = "#000";
+            }
+        }
+        function placeToken() {
+            if (direction) {
+                posRange = x - 10;
+                randomPos = Math.floor((Math.random() * posRange) + 10 - distThreshold);
+                if (randomPos <= 50) {
+                    randomPos = 50;
+                }
+                drawToken(randomPos);
+            } else {
+                posRange = (canvas.width - 10) - x;
+                randomPos = Math.floor((Math.random() * posRange) + x + distThreshold);
+                if (randomPos >= 430) {
+                    randomPos = 430;
+                }
+                drawToken(randomPos);
+            }
+        }
+
+        function drawTimer() {
+            ctx.font='bolder 20px Arial';
+            ctx.fillStyle = "#0095DD    ";
+            ctx.textAlign = "left";
+            ctx.fillText("SCORE: "+score+" TIMER: "+count+" CURRENT: "+currentScore, 20, 250);
+        }
+        function timer() {
+            count++
+        }
+        // a function to draw all the elements on the screem
+        function draw() {
+            // clears the old elements on the screen to redraw the elements in their new positions
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTrack();
+            drawToken(randomPos);
+            drawPlayer(player);
+            drawTokenText();
+            drawProgress();
+            drawTimer();
+
+            if (x > trackX + trackWidth - (ballRadius+player.lineWidth) || x < trackX + ballRadius+player.lineWidth) {
+                direction = !direction;
+                xspeed = -xspeed;
+                drawEnd();   
+            }
+            if (spacePressed) {
+                spacePressed = false;
+                if (x > randomPos - 10 && x < randomPos + 10) {
+                    placeToken();
+                    xspeed = -xspeed;
+                    direction = !direction;
+                    playerAnim();
+                    tokens--;
+                    score+=10;
+
+                }
+            }
+            if (tokens === 0) {
+               drawWin(); 
+            }
+            x += xspeed;
+        }
+        // draw everything every 10th of a second
+        timerTick = setInterval(timer, 1000);
+        drawTick = setInterval(draw, 10);
+    </script>
+</html>
