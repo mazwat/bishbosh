@@ -81,56 +81,36 @@ img {
         }
         function drawItem(type, xpos, ypos, fillColor, strokeColor, lineWidth, width, height, textContent, align, object) {
             ctx.beginPath();
-            if (type === circle) {
+            if (type === "circle") {
+                ctx.arc(xpos, ypos, width, height, Math.PI * 2);
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+                ctx.closePath();
+            }
+            if (type === "strokeCircle") {
                 ctx.arc(xpos, ypos, width, height, Math.PI * 2);
                 ctx.fillStyle = fillColor;
                 ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = lineWidth;
                 ctx.fill();
                 ctx.stroke();
                 ctx.closePath();
             }
-            if (type === square) {
+            if (type === "rectangle") {
                 ctx.rect(xpos, ypos, width, height);
                 ctx.fillStyle = fillColor;
-                ctx.strokeStyle = strokeColor;
                 ctx.fill();
-                ctx.stroke();
                 ctx.closePath();
             }
-            if (type === text) {
-                ctx.font='bolder 20px Arial';
+            if (type === "text") {
+                ctx.font=lineWidth;
                 ctx.fillStyle = fillColor;
                 ctx.fillText(textContent, xpos, ypos);
                 ctx.textAlign = align;
 
             }            
         }
-        // a function to player the ball on the screen
-        function drawPlayer(player) {
-            ctx.beginPath();
-            ctx.arc(x, y, player.width, 0, Math.PI * 2);
-            ctx.lineWidth = player.lineWidth;
-            ctx.strokeStyle = player.strokeColor;
-            ctx.fillStyle = player.color;
-            ctx.fill();
-            ctx.stroke();
-            ctx.closePath();
-        }
-        function drawToken(xpos) {
-            ctx.beginPath();
-            ctx.arc(xpos, y, ballRadius / 2, 0, Math.PI * 2);
-            ctx.fillStyle = "#f00";
-            ctx.fill();
-            ctx.closePath();
-        }
-        // a function to draw the paddle on the screen
-        function drawTrack() {
-            ctx.beginPath();
-            ctx.rect(trackX, trackY, trackWidth, trackHeight);
-            ctx.fillStyle = "#0095DD";
-            ctx.fill();
-            ctx.closePath();
-        }
+
         function drawProgress() {
             var progressX = 10;
             var levels = levelBars;
@@ -148,14 +128,6 @@ img {
 
             }
         }
-        // a function to draw the score text on the screen
-        function drawTokenText() {
-            ctx.font = "35px Helvetica";
-            ctx.font='bolder 40px Arial';
-            ctx.fillStyle = "#0095DD"; 
-            ctx.textAlign = "center";
-            ctx.fillText(tokens, randomPos, 130);
-        }
         // a function to draw the Game over text on the screen
         function drawEnd() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -164,24 +136,24 @@ img {
             ctx.font='bolder 50px Arial';
             ctx.fillStyle = "#0095DD";
             ctx.textAlign = "center";
-            ctx.fillText("GAME OVER", canvas.width / 2, (canvas.height / 2) + 10);
+            ctx.fillText("RESTART", canvas.width / 2, (canvas.height / 2) + 10);
             setTimeout(resetFailGame, 1000);    
         }
          function drawWin() {       
             setTimeout(resetWinGame, 1500);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            timePenalty = Math.round(count/3);
-            score = score-timePenalty;
+            timePenalty = Math.round(count/2);
             //clearInterval(timerTick);
             clearInterval(drawTick);
             console.log("win"); 
             ctx.font='bolder 25px Arial';
-            ctx.fillStyle = "#0095DD    ";
+            ctx.fillStyle = "#000";
             ctx.textAlign = "center";
             if (level < 10) {
-                ctx.fillText("COMPLETE Time Penalty -"+timePenalty, canvas.width / 2, (canvas.height / 2) + 10);
+                ctx.fillText("LEVEL DONE | TIME PENALTY -"+timePenalty, canvas.width / 2, (canvas.height / 2) + 10);
+                score = score-timePenalty;
             } else {
-                ctx.fillText("YOU WIN", canvas.width / 2, (canvas.height / 2) + 10);
+                ctx.fillText("YOU WIN | FINAL SCORE "+score, canvas.width / 2, (canvas.height / 2) + 10);
 
             }
         }
@@ -192,23 +164,17 @@ img {
             console.log("reset");   
             tokenValue++;
             level++;
-            levelBars[level-2] = 1;
-            
+            levelBars[level-2] = 1;     
             count = 0;
-
             // increase speed every level
             if (xspeed > 0) {
                 xspeed+=.4;
             } else {
                 xspeed-=.4;
             }    
-            console.log("speed: "+xspeed);
             tokens = tokenValue;
-            console.log("token value: "+tokenValue);
-            //document.location.reload();
             drawTick = setInterval(draw, 10);
             currentScore = score; 
-            //timeTick = setInterval(timer, 1000);
                 
         }
         function resetFailGame() {
@@ -232,7 +198,6 @@ img {
             player.width = 25;
             player.strokeColor = "#f00";
             setTimeout(changeColor, 100);
-
             function changeColor() {
                 player.color = "rgba(0,0,0,0)";
                 player.width = ballRadius;
@@ -246,22 +211,16 @@ img {
                 if (randomPos <= 50) {
                     randomPos = 50;
                 }
-                drawToken(randomPos);
+                //drawToken(randomPos);
+                drawItem("circle", randomPos, y, "#f00", "#f00", 1, ballRadius / 2, 0, 0, 0, 0);
             } else {
                 posRange = (canvas.width - 10) - x;
                 randomPos = Math.floor((Math.random() * posRange) + x + distThreshold);
                 if (randomPos >= 430) {
                     randomPos = 430;
                 }
-                drawToken(randomPos);
+                drawItem("circle", randomPos, y, "#f00", "#f00", 1, ballRadius / 2, 0, 0, 0, 0); //drawToken(randomPos);
             }
-        }
-
-        function drawTimer() {
-            ctx.font='bolder 20px Arial';
-            ctx.fillStyle = "#0095DD    ";
-            ctx.textAlign = "left";
-            ctx.fillText(/*"SCORE: "+*/score/*+"TIMER: "+count+"CURRENT: "+currentScore*/, 20, 250);
         }
         function timer() {
             count++
@@ -270,13 +229,18 @@ img {
         function draw() {
             // clears the old elements on the screen to redraw the elements in their new positions
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawTrack();
-            drawToken(randomPos);
-            //drawItem(type, xpos, ypos, fillColor, strokeColor, lineWidth, width, height, textContent, align, object); 
-            drawPlayer(player);
-            drawTokenText();
+            // How to wirte the parameters for draw Item - type, xpos, ypos, fillColor, strokeColor, lineWidth, width, height, textContent, align, object
+            // Draw the track
+            drawItem("rectangle", trackX, trackY, "#0095DD", 0, 0, trackWidth, trackHeight, 0, 0, 0);
+            // Draw Bosh (little red circle). The tokens
+            drawItem("circle", randomPos, y, "#f00", "#f00", 1, ballRadius / 2, 0, 0, 0, 0); 
+            // Draw Bish (player red circle)
+            drawItem("strokeCircle", x, y, player.color, player.strokeColor, player.lineWidth, player.width, 0, 0, 0, player); 
+            // Draw score text
+            drawItem("text", canvas.width/2, 130, "#ccc", 0, 'bolder 50px Helvetica', 0, 0, score, "center", 0);
+            // Draw token number text
+            drawItem("text", randomPos, 130, "#0095DD", 0, 'bolder 50px Helvetica', 0, 0, tokens, "center", 0);              
             drawProgress();
-            drawTimer();
 
             if (x > trackX + trackWidth - (ballRadius+player.lineWidth) || x < trackX + ballRadius+player.lineWidth) {
                 direction = !direction;
@@ -292,7 +256,6 @@ img {
                     playerAnim();
                     tokens--;
                     score+=10;
-
                 }
             }
             if (tokens === 0) {
