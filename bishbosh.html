@@ -30,7 +30,7 @@ img {
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   </head>
   <body>
-  <canvas id="myCanvas" width="480" height="320"></canvas>
+  <canvas id="myCanvas" width="800" height="320"></canvas>
     <p><br><STRONG>BISH BOSH</STRONG><br>
     This is Bish <img src="bish.png"> who likes eating Bosh <img src="bosh.png">
     <br>See how many Bosh you can eat. <br> The more Bosh Bish eats the faster it gets.
@@ -45,12 +45,12 @@ img {
     var y = canvas.height/2;
     var xspeed = 1;
     var trackHeight = 60;
-    var trackWidth = 460;
+    var trackWidth = canvas.width-20;
     var trackY = (canvas.height - trackHeight) / 2;
     var trackX = 10;
     var spacePressed = false;
     var posRange;
-    var randomPos = 300;
+    var randomPos = 400;
     // gap between player and token placement
     var distThreshold = 50;
     // direction: 'true' = moving right ---> and 'false' = moving left <----
@@ -79,6 +79,7 @@ img {
             strokeColor: "#00000",
             lineWidth: 10
         }
+        // general function to render all the game elements to screen
         function drawItem(type, xpos, ypos, fillColor, strokeColor, lineWidth, width, height, textContent, align, object) {
             ctx.beginPath();
             if (type === "circle") {
@@ -112,7 +113,7 @@ img {
         }
 
         function drawProgress() {
-            var progressX = 10;
+            var progressX = canvas.width/2-230;
             var levels = levelBars;
             for (i = 0; i < 8; i++) {          
                 ctx.beginPath();
@@ -129,15 +130,15 @@ img {
             }
         }
         // a function to draw the Game over text on the screen
-        function drawEnd() {
+        function drawReplay() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             clearInterval(drawTick);
             ctx.font = "40px Arial";
             ctx.font='bolder 50px Arial';
             ctx.fillStyle = "#0095DD";
             ctx.textAlign = "center";
-            ctx.fillText("RESTART", canvas.width / 2, (canvas.height / 2) + 10);
-            setTimeout(resetFailGame, 1000);    
+            ctx.fillText("TRY AGAIN", canvas.width / 2, (canvas.height / 2) + 10);
+            setTimeout(resetFailGame, 1500);    
         }
          function drawWin() {       
             setTimeout(resetWinGame, 1500);
@@ -146,31 +147,37 @@ img {
             //clearInterval(timerTick);
             clearInterval(drawTick);
             console.log("win"); 
-            ctx.font='bolder 25px Arial';
-            ctx.fillStyle = "#000";
+            ctx.font='bolder 50px Arial';
+            ctx.fillStyle = "#0095DD";
             ctx.textAlign = "center";
             if (level < 10) {
-                ctx.fillText("LEVEL DONE | TIME PENALTY -"+timePenalty, canvas.width / 2, (canvas.height / 2) + 10);
+                ctx.fillText("LEVEL DONE", canvas.width / 2, (canvas.height / 2)-20);
+                ctx.fillText("Time Penalty -"+timePenalty, canvas.width / 2, (canvas.height / 2) + 40);
                 score = score-timePenalty;
             } else {
                 ctx.fillText("YOU WIN | FINAL SCORE "+score, canvas.width / 2, (canvas.height / 2) + 10);
 
             }
+
         }
         function resetWinGame() {
             if (level === 10) {
                 document.location.reload();
             }
-            console.log("reset");   
+            //console.log("reset");   
             tokenValue++;
             level++;
             levelBars[level-2] = 1;     
             count = 0;
+            trackWidth = trackWidth-70;
+            trackX = trackX+35;
+            console.log("track X: "+trackX+" track width: "+trackWidth);
+            placeToken();
             // increase speed every level
             if (xspeed > 0) {
-                xspeed+=.4;
+                xspeed+= 0.3;
             } else {
-                xspeed-=.4;
+                xspeed-= 0.3;
             }    
             tokens = tokenValue;
             drawTick = setInterval(draw, 10);
@@ -178,21 +185,28 @@ img {
                 
         }
         function resetFailGame() {
-            console.log(tokens);
+            if (direction) {
+                //x = trackX+ballRadius;
+            } else {
+                //x = (trackX+trackWidth)-ballRadius;
+            }
+            //console.log(tokens);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);   
             if (tokenValue <= 3) {
                 document.location.reload();
                 tokens = tokenValue;
                 console.log("level 1"+" tokenIncrease: "+tokenValue);
                 drawTick = setInterval(draw, 10);
-                console.log("level 1");
+                //console.log("level 1");
             } else {            
                 tokens = tokenValue;
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                //ctx.clearRect(0, 0, canvas.width, canvas.height);
                 console.log("level 2+"+" tokenIncrease: "+tokenValue);
-                drawTick = setInterval(draw, 10);
                 score = currentScore;
+                drawTick = setInterval(draw, 10);
             }           
         }
+        //animation that flashes the player when they hit the red circle
         function playerAnim() {
             player.color = "rgba(255,0,0,1)";
             player.width = 25;
@@ -206,18 +220,24 @@ img {
         }
         function placeToken() {
             if (direction) {
-                posRange = x - 10;
-                randomPos = Math.floor((Math.random() * posRange) + 10 - distThreshold);
-                if (randomPos <= 50) {
-                    randomPos = 50;
+                posRange = x - trackX;
+                randomPos = Math.floor((Math.random() * posRange) + trackX - distThreshold);
+                console.log("place left pos: "+randomPos);
+                if (randomPos < trackX+60) {
+                    console.log("edge left: "+randomPos);
+                    randomPos = trackX+60;
+                    console.log("edge left corrected: "+randomPos);
                 }
                 //drawToken(randomPos);
                 drawItem("circle", randomPos, y, "#f00", "#f00", 1, ballRadius / 2, 0, 0, 0, 0);
             } else {
-                posRange = (canvas.width - 10) - x;
+                posRange = (canvas.width - trackX) - x;
                 randomPos = Math.floor((Math.random() * posRange) + x + distThreshold);
-                if (randomPos >= 430) {
-                    randomPos = 430;
+                console.log("place right pos: "+randomPos);
+                if (randomPos > (canvas.width - trackX)-50) {
+                    console.log("edge right: "+randomPos);
+                    randomPos = (canvas.width - trackX)-60;
+                    console.log("edge right corrected: "+randomPos);
                 }
                 drawItem("circle", randomPos, y, "#f00", "#f00", 1, ballRadius / 2, 0, 0, 0, 0); //drawToken(randomPos);
             }
@@ -235,21 +255,31 @@ img {
             // Draw Bosh (little red circle). The tokens
             drawItem("circle", randomPos, y, "#f00", "#f00", 1, ballRadius / 2, 0, 0, 0, 0); 
             // Draw Bish (player red circle)
-            drawItem("strokeCircle", x, y, player.color, player.strokeColor, player.lineWidth, player.width, 0, 0, 0, player); 
+            drawItem("strokeCircle", x, y, player.color, player.strokeColor, player.lineWidth, player.width, 0, 0, 0, player);
+            if (direction) {
+            // draw Bish's eyes
+                drawItem("circle", x+6, y-3, "#000", "#000", 1, 4, 0, 0, 0, 0); 
+            } else {
+                drawItem("circle", x-6, y-3, "#000", "#)00", 1, 4, 0, 0, 0, 0); 
+
+            }
+            
             // Draw score text
-            drawItem("text", canvas.width/2, 130, "#ccc", 0, 'bolder 50px Helvetica', 0, 0, score, "center", 0);
+            drawItem("text", canvas.width/2, 129.3, "#ccc", 0, 'bolder 50px Helvetica', 0, 0, score, "center", 0);
             // Draw token number text
-            drawItem("text", randomPos, 130, "#0095DD", 0, 'bolder 50px Helvetica', 0, 0, tokens, "center", 0);              
+            drawItem("text", randomPos, 129.5, "#0095DD", 0, 'bolder 50px Helvetica', 0, 0, tokens, "center", 0);              
             drawProgress();
 
             if (x > trackX + trackWidth - (ballRadius+player.lineWidth) || x < trackX + ballRadius+player.lineWidth) {
                 direction = !direction;
                 xspeed = -xspeed;
-                drawEnd();   
+                drawReplay();
+                console.log("off edge - randomPos:"+randomPos+" x:"+x+" trackX:"+trackX+" trackWidth:"+trackWidth); 
+                //placeToken();
             }
             if (spacePressed) {
                 spacePressed = false;
-                if (x > randomPos - 10 && x < randomPos + 10) {
+                if (x > randomPos - 20 && x < randomPos + 20) {
                     placeToken();
                     xspeed = -xspeed;
                     direction = !direction;
